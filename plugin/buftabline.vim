@@ -36,6 +36,7 @@ hi default link BufTabLineFill            TabLineFill
 hi default link BufTabLineModifiedCurrent BufTabLineCurrent
 hi default link BufTabLineModifiedActive  BufTabLineActive
 hi default link BufTabLineModifiedHidden  BufTabLineHidden
+hi default link BufTabLineSep             BufTabLineHidden
 
 let g:buftabline_numbers    = get(g:, 'buftabline_numbers',    0)
 let g:buftabline_indicators = get(g:, 'buftabline_indicators', 0)
@@ -161,6 +162,25 @@ function! buftabline#render()
 	endif
 
 	if len(tabs) | let tabs[0].label = substitute(tabs[0].label, lpad, ' ', '') | endif
+
+	" separators around Hidden tabs only, not Current or Active.
+	" also, highlight separators with BufTabLineSep.
+	if g:buftabline_separators == 2
+		let previous_tab_is_current_or_active = 0
+		for tab in tabs
+			if previous_tab_is_current_or_active
+				let tab.label = substitute(tab.label, lpad, ' ', '')
+				let previous_tab_is_current_or_active = 0
+			endif
+			if stridx(tab.hilite, 'Current') >= 0 || stridx(tab.hilite, 'Active') >= 0
+				let tab.label = substitute(tab.label, lpad, ' ', '')
+				let previous_tab_is_current_or_active = 1
+			else
+				let hilited_sep = "%#BufTabLineSep#" . lpad . "%#BufTabLineHidden#"
+				let tab.label = substitute(tab.label, lpad, hilited_sep, '')
+			endif
+		endfor
+	endif
 
 	let swallowclicks = '%'.(1 + tabpagenr('$')).'X'
 	return s:tablineat
